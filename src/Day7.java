@@ -144,7 +144,7 @@ public class Day7 {
                     case LESS_THAN: return (i, j) -> i < j ? 1 : 0;
                     case EQUAL: return (i, j) -> i == j ? 1 : 0;
                     default: throw new IllegalArgumentException(
-                            "operatorMap maps to parameters opcodes, not the case for: " + opCode);
+                            "operatorMap maps two parameters opcodes, not the case for: " + opCode);
                 }
             }
 
