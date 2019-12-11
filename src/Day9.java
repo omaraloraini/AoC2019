@@ -121,8 +121,8 @@ public class Day9 {
                     ensureMemorySize(address);
                     memory[address] = value;
                     break;
+                case IMMEDIATE: throw new IllegalArgumentException("Can't store using immediate mode");
             }
-
         }
 
         private int loadCurrentInstruction() {
@@ -148,13 +148,6 @@ public class Day9 {
             }
         }
 
-        /*
-        * async == true              => reader == null
-        * async == true && first run => input  == empty
-        * async == false             => input  == empty
-        *
-        * returns true on halt
-        */
         private boolean fetchDecodeExecute(LongSupplier reader, LongConsumer writer) {
             int instruction = loadCurrentInstruction();
             OpCode opcode = OpCode.mapConstant(instruction % 100);
@@ -163,7 +156,6 @@ public class Day9 {
             AddressingMode thirdMode = AddressingMode.mapConstant((instruction / 10000) % 10);
             int nextInstruction = cursor + opcode.size;
 
-            /* break to move to the next instruction, return otherwise */
             switch (opcode) {
                 case ADD:
                 case MULTIPLY:
