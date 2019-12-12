@@ -77,7 +77,7 @@ public class Day9 {
         private int cursor;
         private int relativeBase;
 
-        private IntCodeMachine(long[] initialMemory) {
+        IntCodeMachine(long[] initialMemory) {
             memory = Arrays.copyOf(initialMemory, initialMemory.length);
             cursor = 0;
             relativeBase = 0;
@@ -199,11 +199,12 @@ public class Day9 {
             return false;
         }
 
-        private void runSynchronously(LongSupplier reader, LongConsumer writer) {
-            while (!fetchDecodeExecute(reader, writer));
+        void runSynchronously(LongSupplier reader, LongConsumer writer) {
+            //noinspection StatementWithEmptyBody
+            while (!fetchDecodeExecute(reader, writer)) ;
         }
 
-        private void runSynchronouslyWithSystemInOut() {
+        void runSynchronouslyWithSystemInOut() {
             Scanner scanner = new Scanner(System.in);
             runSynchronously(scanner::nextLong, System.out::println);
         }

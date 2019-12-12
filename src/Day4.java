@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -23,18 +22,8 @@ public class Day4 {
         return i == 0;
     }
 
-    static class Pair {
-        final int number;
-        final int count;
-
-        Pair(int number, int count) {
-            this.number = number;
-            this.count = count;
-        }
-    }
-
-    static List<Pair> groupAdjacent(int i) {
-        List<Pair> list = new ArrayList<>();
+    static List<Pair<Integer, Integer>> groupAdjacent(int i) {
+        List<Pair<Integer, Integer>> list = new ArrayList<>();
 
         int last = i % 10;
         int c = 1;
@@ -45,7 +34,7 @@ public class Day4 {
             if (last == d) {
                 c++;
             } else {
-                list.add(new Pair(last, c));
+                list.add(Pair.of(last, c));
                 c = 1;
             }
             last = d;
@@ -61,7 +50,7 @@ public class Day4 {
 
         static boolean match(int password) {
             return nonIncreasing(password) &&
-                    groupAdjacent(password).stream().anyMatch(p -> p.count >= 2);
+                    groupAdjacent(password).stream().anyMatch(p -> p.second() >= 2);
         }
     }
 
@@ -72,7 +61,7 @@ public class Day4 {
 
         static boolean match(int password) {
             return nonIncreasing(password) &&
-                    groupAdjacent(password).stream().anyMatch(p -> p.count == 2);
+                    groupAdjacent(password).stream().anyMatch(p -> p.second() == 2);
         }
     }
 }

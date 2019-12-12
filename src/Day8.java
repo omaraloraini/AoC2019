@@ -25,6 +25,7 @@ public class Day8 {
             }
 
 
+            @SuppressWarnings("OptionalGetWithoutIsPresent")
             int[] layer = IntStream
                     .range(0, input.length() / LAYER_SIZE)
                     .mapToObj(i -> Arrays.stream(digits).skip(i * LAYER_SIZE).limit(LAYER_SIZE).toArray())
@@ -58,7 +59,7 @@ public class Day8 {
                 digits[i] = Character.digit(input.charAt(i), 10);
             }
 
-            var image = IntStream
+            return IntStream
                     .range(0, input.length() / LAYER_SIZE)
                     .mapToObj(i -> Arrays.stream(digits).skip(i * LAYER_SIZE).limit(LAYER_SIZE).toArray())
                     .reduce((first, second) -> {
@@ -71,8 +72,6 @@ public class Day8 {
                     .map(stream -> stream.collect(Collectors.joining("")))
                     .map(s -> s.replaceAll("(.{25})", "$1\n"))
                     .get();
-
-            return image;
         }
     }
 }

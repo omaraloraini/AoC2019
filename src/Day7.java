@@ -6,6 +6,7 @@ import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
+@SuppressWarnings("ALL")
 public class Day7 {
     public static void main(String[] args) throws IOException {
         System.out.println(Part1.answer());
@@ -290,7 +291,9 @@ public class Day7 {
                     }
                 }
 
-                return output.poll();
+                Integer signal = output.poll();
+                if (signal == null) throw new RuntimeException("Last amplifier has not output");
+                return signal;
             }
         }
     }

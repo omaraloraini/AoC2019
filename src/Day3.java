@@ -218,6 +218,7 @@ public class Day3 {
     }
 
     static class Part1 {
+        @SuppressWarnings("OptionalGetWithoutIsPresent")
         static long answer() throws IOException {
             String[] traces = Files.readString(INPUT_PATH).split("\\n");
             List<FlatVector> cable1 = pointsToVectors(parseTrace(traces[0]));
@@ -233,6 +234,7 @@ public class Day3 {
     }
 
     static class Part2 {
+        @SuppressWarnings("OptionalGetWithoutIsPresent")
         static long answer() throws IOException {
             String[] traces = Files.readString(INPUT_PATH).split("\\n");
             List<FlatVector> cable1 = pointsToVectors(parseTrace(traces[0]));
