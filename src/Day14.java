@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.LongBinaryOperator;
 import java.util.stream.Collectors;
 
 public class Day14 {
@@ -38,9 +39,9 @@ public class Day14 {
 
             /*
             * Try to produce one million fuel, if it's not possible, try half the amount,
-            * keep retying until we hit zero, implying we don't have enough ore to produce _any_ fuel.
+            * keep retrying until we hit zero, implying we don't have enough ore to produce _any_ fuel.
             * In that case, we try to turn the excess elements back to ore.
-            * If we can't, it would mean that we can't produce fuel nor turn back excess to ore, thus, exit loop.
+            * If we can't, exit loop.
             * */
 
             do { // Loop until no more fuel can be produced AND no more ore can be produced;
@@ -92,14 +93,7 @@ public class Day14 {
 
         Function<String, Long> getQuantity = key -> map.getOrDefault(key, 0L);
 
-        BiFunction<Reaction, Long, Reaction> producingAtLeast = (reaction, target) -> {
-            if (target <= reaction.productCoefficient) return reaction;
-            else {
-                long factor = target / reaction.productCoefficient;
-                factor = factor * reaction.productCoefficient < target ? factor + 1 : factor;
-                return reaction.multiply(factor);
-            }
-        };
+        LongBinaryOperator divCeil = (l1, l2) -> (long) Math.ceil((double) l1 / l2);
 
         while (!stack.isEmpty()) {
             var pair = stack.pop();
@@ -110,7 +104,10 @@ public class Day14 {
 
             Optional<Reaction> optionalReaction = reactions.stream()
                     .filter(r -> r.product.equals(element))
-                    .map(r -> producingAtLeast.apply(r, quantityRequired - getQuantity.apply(element)))
+                    .map(r -> {
+                        long factor = divCeil.applyAsLong(quantityRequired - getQuantity.apply(element), r.productCoefficient);
+                        return r.multiply(factor);
+                    })
                     .findFirst();
 
             if (optionalReaction.isEmpty()) return available;
