@@ -15,7 +15,8 @@ public class Day11 {
 
     private static class Part1 {
         public static long answer() throws IOException {
-            PaintingRobot robot = new PaintingRobot(0, 0, PaintingRobot.Direction.UP, readProgram(), Color.BLACK);
+            IntCodeMachine machine = IntCodeMachine.fromFile(INPUT_PATH);
+            PaintingRobot robot = new PaintingRobot(0, 0, PaintingRobot.Direction.UP, machine, Color.BLACK);
             robot.paint();
             return robot.colorMap.size();
         }
@@ -23,7 +24,8 @@ public class Day11 {
 
     private static class Part2 {
         public static String answer() throws IOException {
-            PaintingRobot robot = new PaintingRobot(0, 0, PaintingRobot.Direction.UP, readProgram(), Color.WHITE);
+            IntCodeMachine machine = IntCodeMachine.fromFile(INPUT_PATH);
+            PaintingRobot robot = new PaintingRobot(0, 0, PaintingRobot.Direction.UP, machine, Color.WHITE);
             robot.paint();
             return draw(robot.colorMap);
         }
@@ -61,15 +63,6 @@ public class Day11 {
 
             return stringBuilder.toString();
         }
-    }
-
-    private static long[] readProgram() throws IOException {
-        String input = Files.readString(INPUT_PATH);
-        return Arrays
-                .stream(input
-                        .split(","))
-                .map(String::trim)
-                .mapToLong(Long::parseLong).toArray();
     }
 
     enum Color {
@@ -131,15 +124,15 @@ public class Day11 {
         }
 
         private Direction direction;
-        private final Day9.IntCodeMachine machine;
+        private final IntCodeMachine machine;
         private final HashMap<Pair<Integer, Integer>, Color> colorMap;
         boolean setColor = true;
 
-        PaintingRobot(int x, int y, Direction initialDirection, long[] intCode, Color initialColor) {
+        PaintingRobot(int x, int y, Direction initialDirection, IntCodeMachine machine, Color initialColor) {
             this.x = x;
             this.y = y;
             this.direction = initialDirection;
-            machine = new Day9.IntCodeMachine(intCode);
+            this.machine = machine;
             colorMap = new HashMapWithDefault<>(Color.BLACK);
             colorMap.put(Pair.of(x, y), initialColor);
         }

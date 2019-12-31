@@ -16,19 +16,9 @@ public class Day15 {
 
     static final Path INPUT_PATH = Path.of(".", "input15.txt");
 
-    static long[] readProgram() throws IOException {
-        String input = Files.readString(INPUT_PATH);
-        return Arrays
-                .stream(input
-                        .split(","))
-                .map(String::trim)
-                .mapToLong(Long::parseLong).toArray();
-    }
-
     static class Part1 {
         static long answer() throws IOException {
-            long[] source = readProgram();
-            Day9.IntCodeMachine machine = new Day9.IntCodeMachine(source);
+            IntCodeMachine machine = IntCodeMachine.fromFile(INPUT_PATH);
             RepairDroidController controller = new RepairDroidController(machine);
             return controller.shortestPathToOxygen();
         }
@@ -36,8 +26,7 @@ public class Day15 {
 
     static class Part2 {
         static long answer() throws IOException {
-            long[] source = readProgram();
-            Day9.IntCodeMachine machine = new Day9.IntCodeMachine(source);
+            IntCodeMachine machine = IntCodeMachine.fromFile(INPUT_PATH);
             RepairDroidController controller = new RepairDroidController(machine);
             return controller.oxygenSpreadTime();
         }
@@ -96,7 +85,7 @@ public class Day15 {
 
     static class RepairDroidController implements LongSupplier, LongConsumer {
 
-        private final Day9.IntCodeMachine machine;
+        private final IntCodeMachine machine;
         private final ArrayList<Direction> stack;
         private HashMap<Pair<Integer, Integer>, ReplyStatus> grid;
         private int x;
@@ -104,7 +93,7 @@ public class Day15 {
         private Pair<Integer, Integer> oxygenPosition;
 
 
-        public RepairDroidController(Day9.IntCodeMachine machine) {
+        public RepairDroidController(IntCodeMachine machine) {
             this.machine = machine;
             grid = new HashMap<>();
             x = 0;

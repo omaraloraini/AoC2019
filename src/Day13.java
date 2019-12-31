@@ -13,19 +13,10 @@ public class Day13 {
     }
 
     static final Path INPUT_PATH = Path.of(".", "input13.txt");
-    static long[] readProgram() throws IOException {
-        String input = Files.readString(INPUT_PATH);
-        return Arrays
-                .stream(input
-                        .split(","))
-                .map(String::trim)
-                .mapToLong(Long::parseLong).toArray();
-    }
 
     static class Part1 {
         static long answer() throws IOException {
-            long[] memory = readProgram();
-            Day9.IntCodeMachine machine = new Day9.IntCodeMachine(memory);
+            IntCodeMachine machine = IntCodeMachine.fromFile(INPUT_PATH);
             ArcadeCabinet cabinet = new ArcadeCabinet(false);
             machine.runSynchronously(cabinet, cabinet);
             return cabinet.grid.values().stream().filter(tile -> tile == Tile.BLOCK).count();
@@ -34,18 +25,16 @@ public class Day13 {
 
     static class Part2 {
         static long answer() throws IOException {
-            long[] memory = readProgram();
-            memory[0] = 2;
-            Day9.IntCodeMachine machine = new Day9.IntCodeMachine(memory);
+            IntCodeMachine machine = IntCodeMachine.fromFile(INPUT_PATH, memory -> memory[0] = 2);
+
             ArcadeCabinet cabinet = new ArcadeCabinet(false);
             machine.runSynchronously(cabinet, cabinet);
             return cabinet.getScore();
         }
 
         static long answerInteractive() throws IOException {
-            long[] memory = readProgram();
-            memory[0] = 2;
-            Day9.IntCodeMachine machine = new Day9.IntCodeMachine(memory);
+            IntCodeMachine machine = IntCodeMachine.fromFile(INPUT_PATH, memory -> memory[0] = 2);
+
             ArcadeCabinet cabinet = new ArcadeCabinet(true);
             machine.runSynchronously(cabinet, cabinet);
             return cabinet.getScore();
@@ -121,18 +110,12 @@ public class Day13 {
                 e.printStackTrace();
             }
 
-            if (ballX < paddleX) {
-                return -1;
-            } else if (ballX > paddleX) {
-                return 1;
-            } else {
-                return 0;
-            }
+            return Long.compare(ballX, paddleX);
         }
 
         String render() {
-            int maxX = (int)(long) grid.keySet().stream().max(Comparator.comparingLong(Pair::first)).get().first();
-            int maxY = (int)(long) grid.keySet().stream().max(Comparator.comparingLong(Pair::second)).get().second();
+            int maxX = (int)(long) grid.keySet().stream().max(Comparator.comparingLong(Pair::first)).orElseThrow().first();
+            int maxY = (int)(long) grid.keySet().stream().max(Comparator.comparingLong(Pair::second)).orElseThrow().second();
 
             String[][] array = new String[maxY + 1][maxX + 1];
             for (String[] strings : array) {
