@@ -218,4 +218,8 @@ public class IntCodeMachine {
         Scanner scanner = new Scanner(System.in);
         runSynchronously(scanner::nextLong, System.out::println);
     }
+
+    IntCodeMachine fork() {
+        return new IntCodeMachine(this.memory);
+    }
 }
