@@ -1,123 +1,123 @@
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.LongUnaryOperator;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
+import java.util.*;
 
 public class Day22 {
 
     public static void main(String[] args) throws IOException {
         System.out.println(Part1.answer());
+        System.out.println(Part2.answer());
     }
+
+    static final Path INPUT_PATH = Path.of(".", "input22.txt");
 
     static class Part1 {
         static long answer() throws IOException {
             List<String> lines = Files.readAllLines(INPUT_PATH);
             int deckSize = 10007;
-            int value = 2019;
-            long[] shuffle = shuffle(deckSize, lines);
-
-            int i = 0;
-            while (i < shuffle.length) {
-                if (shuffle[i] == value) break;
-                i++;
-            }
-            return i;
+            BigInteger value = BigInteger.valueOf(2019);
+            LinearCongruentialFunction shuffle = shuffle(deckSize, lines);
+            return shuffle.apply(2019).longValue();
         }
     }
 
+    static class Part2 {
+        static long answer() throws IOException {
+            List<String> lines = Files.readAllLines(INPUT_PATH);
+            long deckSize  = 119315717514047L;
+            long shuffles = 101741582076661L;
+            BigInteger position = BigInteger.valueOf(2020);
 
-    static long[] shuffle(int deckSize, List<String> input) {
+            LinearCongruentialFunction f = shuffle(deckSize, lines);
 
-        LongUnaryOperator inverse = /* maps final position to starting position */
-                reverse(parseInput(input, deckSize))
-                .stream()
-                .reduce(LongUnaryOperator::andThen)
-                .orElseThrow();
-
-        return LongStream.range(0, deckSize).map(inverse).toArray();
-    }
-
-    private static <T> List<T> reverse(List<T> list) {
-        ArrayList<T> reversed = new ArrayList<>(list.size());
-        for (int i = list.size() - 1; i >= 0; i--) {
-            T t = list.get(i);
-            reversed.add(t);
+            BigInteger m = f.m;
+            BigInteger A = f.a.modPow(BigInteger.valueOf(shuffles), m);
+            BigInteger B = f.b.multiply(BigInteger.ONE.subtract(A)).multiply(BigInteger.ONE.subtract(f.a).modInverse(m));
+            return position.subtract(B).multiply(A.modInverse(m)).mod(m).longValue();
         }
-        return reversed;
     }
 
-    static List<LongUnaryOperator> parseInput(List<String> list, long deckSize) {
-        return list.stream().map(line -> {
-            if (line.equals("deal into new stack")) return dealNewStack(deckSize);
+    static LinearCongruentialFunction shuffle(long deckSize, List<String> input) {
+        return input.stream().map(line -> {
+            if (line.equals("deal into new stack")) return dealNewStackFunction(deckSize);
             else {
                 String[] parts = line.split(" ");
 
                 if (parts[0].equals("cut")) {
                     long n = Integer.parseInt(parts[1]);
-                    return cutN(n, deckSize);
+                    return cutNFunction(n, deckSize);
+                } else {
+                    long n = Integer.parseInt(parts[3]);
+                    return dealWithIncrementFunction(n, deckSize);
                 }
-                long n = Integer.parseInt(parts[3]);
-                return dealWithIncrement(n, deckSize);
+
             }
-        }).collect(Collectors.toList());
+        }).reduce(LinearCongruentialFunction::andThen).orElseThrow();
     }
 
-    static final Path INPUT_PATH = Path.of(".", "input22.txt");
+    static class LinearCongruentialFunction { /* an + b (mod m) */
+        final BigInteger a;
+        final BigInteger b;
+        final BigInteger m;
 
-    static long[] extendedEuclideanAlgorithm(long a, long b) {
-        if (b > a) {
-            long[] result = extendedEuclideanAlgorithm(b, a);
-            long temp = result[1];
-            result[1] = result[2];
-            result[2] = temp;
-            return result;
+        LinearCongruentialFunction(BigInteger a, BigInteger b, BigInteger m) {
+            this.a = a;
+            this.b = b;
+            this.m = m;
         }
 
-        long r0, r1, rn;
-        long s0, s1, sn;
-        long t0, t1, tn;
-
-        r0 = a;
-        r1 = b;
-        s0 = 1;
-        s1 = 0;
-        t0 = 0;
-        t1 = 1;
-
-        long q;
-        while (r1 != 0) {
-            q = r0 / r1;
-            rn = r0 - q * r1;
-            sn = s0 - q * s1;
-            tn = t0 - q * t1;
-
-            r0 = r1;
-            s0 = s1;
-            t0 = t1;
-            r1 = rn;
-            s1 = sn;
-            t1 = tn;
+        LinearCongruentialFunction(long a, long b, long m) {
+            this.a = BigInteger.valueOf(a);
+            this.b = BigInteger.valueOf(b);
+            this.m = BigInteger.valueOf(m);
         }
 
-        return s0 == 0
-                ? new long[]{r0, s1, t1 + 1}
-                : new long[]{r0, s0, t0};
+        BigInteger apply(long n) { return apply(BigInteger.valueOf(n)); }
+        BigInteger apply(BigInteger n) {
+            return a.multiply(n).add(b).mod(m);
+        }
+
+        /* f.compose(g) =:= g(f(x)) */
+        LinearCongruentialFunction compose(LinearCongruentialFunction g) {
+            if (!m.equals(g.m)) throw new IllegalArgumentException();
+
+            /* f(x) = ax + b
+            *  g(x) = cx + d
+            *  f(g(x)) = a(cx + d) + b = acx + ad + b = (ac)x + (ad + b) (mod m)
+            */
+            BigInteger a = this.a;
+            BigInteger b = this.b;
+            BigInteger c = g.a;
+            BigInteger d = g.b;
+
+            return new LinearCongruentialFunction(
+                    a.multiply(c).mod(m),
+                    a.multiply(d).add(b).mod(m),
+                    m);
+        }
+
+        /* g(f(x) */
+        LinearCongruentialFunction andThen(LinearCongruentialFunction g) {
+            return g.compose(this);
+        }
+
+        @Override
+        public String toString() {
+            return "ModuloArithmeticFunction( " +a+ " n + " +b+ " (mod " +m+ ") )";
+        }
     }
 
-    static LongUnaryOperator dealWithIncrement(long n, long deckSize) {
-        long[] cs = extendedEuclideanAlgorithm(n, deckSize);
-        return i -> Math.floorMod(i * cs[1], deckSize);
+    static LinearCongruentialFunction dealWithIncrementFunction(long n, long deckSize) {
+        return new LinearCongruentialFunction(n, 0, deckSize);
     }
 
-    static LongUnaryOperator dealNewStack(long deckSize) {
-        return i -> deckSize - i - 1;
+    static LinearCongruentialFunction dealNewStackFunction(long deckSize) {
+        return new LinearCongruentialFunction(-1, -1, deckSize);
     }
 
-    static LongUnaryOperator cutN(long n, long deckSize) {
-        return i -> Math.floorMod(i + n, deckSize);
+    static LinearCongruentialFunction cutNFunction(long n, long deckSize) {
+        return new LinearCongruentialFunction(1, -n, deckSize);
     }
 }
