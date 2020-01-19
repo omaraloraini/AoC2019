@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.function.LongBinaryOperator;
@@ -207,6 +207,85 @@ public class IntCodeMachine {
 
         cursor = nextInstruction;
         return false;
+    }
+
+    class AsyncRun {
+        private final LongConsumer writer;
+
+        AsyncRun(LongConsumer writer) {
+            this.writer = writer;
+        }
+
+        int state = 0; /* 0: Can run, 1: waiting for input, 2: halt */
+        boolean run() {
+            while (true) {
+                switch (state) {
+                    case 0:
+                        state = fetchDecodeExecute(writer, Optional.empty());
+                        break;
+                    case 1: return false;
+                    case 2: return true;
+                }
+            }
+        }
+
+        void continueWith(long value) {
+            state = fetchDecodeExecute(writer, Optional.of(value));
+        }
+
+        private int fetchDecodeExecute(LongConsumer writer, Optional<Long> value) {
+            int instruction = loadCurrentInstruction();
+            OpCode opcode = OpCode.mapConstant(instruction % 100);
+            AddressingMode firstMode = AddressingMode.mapConstant((instruction / 100) % 10);
+            AddressingMode secondMode = AddressingMode.mapConstant((instruction / 1000) % 10);
+            AddressingMode thirdMode = AddressingMode.mapConstant((instruction / 10000) % 10);
+            int nextInstruction = cursor + opcode.size;
+
+            switch (opcode) {
+                case ADD:
+                case MULTIPLY:
+                case LESS_THAN:
+                case EQUAL:
+                    long op1 = load(firstMode, cursor + 1);
+                    long op2 = load(secondMode, cursor + 2);
+                    int dstAddress = (int) load(AddressingMode.IMMEDIATE, cursor + 3);
+
+                    store(thirdMode, dstAddress, operatorMap(opcode).applyAsLong(op1, op2));
+                    break;
+                case INPUT:
+                    if (value.isEmpty()) return 1; /* async return */
+                    dstAddress = (int) load(AddressingMode.IMMEDIATE, cursor + 1);
+                    store(firstMode, dstAddress, value.get());
+                    break;
+                case OUTPUT:
+                    op1 = load(firstMode, cursor + 1);
+                    writer.accept(op1);
+                    break;
+                case JUMP_IF_TRUE:
+                case JUMP_IF_FALSE:
+                    op1 = load(firstMode, cursor + 1);
+                    op2 = load(secondMode, cursor + 2);
+
+                    if (opcode == OpCode.JUMP_IF_TRUE && op1 != 0)
+                        nextInstruction = (int) op2;
+                    else if (opcode == OpCode.JUMP_IF_FALSE && op1 == 0)
+                        nextInstruction = (int) op2;
+
+                    break;
+                case SET_RELATIVE_BASE:
+                    op1 = load(firstMode, cursor + 1);
+                    relativeBase = relativeBase + (int) op1;
+                    break;
+                case HALT:
+                    return 2; /* halt */
+            }
+            cursor = nextInstruction;
+            return 0;
+        }
+    }
+
+    AsyncRun async(LongConsumer writer) {
+        return new AsyncRun(writer);
     }
 
     void runSynchronously(LongSupplier reader, LongConsumer writer) {
